@@ -1,0 +1,106 @@
+.column {
+	float: left;
+	width: 500px;
+}
+.narrowcolumn {
+	float: left;
+	width: 120px;
+}
+#legend span {
+	display: block;
+	float: left;
+	font-size: 90%;
+	margin-top: 2px;
+}
+.legend-city {
+	margin-bottom: 0.5em;
+	clear: both;
+}
+.month h3, .legend-city h3, .legend-city h4 {
+  margin: 0 0 0 0;
+}
+.month h3, .legend-city h3, .legend-city span {
+  font-size: 13px;
+}
+.month h3 {
+  margin-bottom: 0.25em;
+}
+.legend-city h4 {
+  font-size: 11px;
+  font-weight: normal;
+  margin-bottom: 0.3em;
+}
+.legend-inline {
+	margin-bottom: -0.4em;
+}
+.legend-inline .calendar-box {
+	margin-top: 0.4em;
+}
+.legend-inline span {
+	margin-left: 0.4em;
+}
+
+.months {
+	float: left;
+}
+.month {
+	-x-clear: both;
+	-x-width: 200px;
+	margin-bottom: 0.5em;
+}
+.month-title, .legend-title {
+	padding: 8px 0px 2px 0px;
+}
+#edit-controls {
+	display: none;
+}
+#edit-controls, #edit-controls-placeholder {
+	margin-top: 20px;
+}
+#edit-day-form {
+	display: none;
+}
+#deselect-all {
+	float: right;
+	margin: 0px 0px 0px 20px;
+}
+#calendar {
+	clear: both;
+	margin-top: 10px;
+}
+.calendar-box {
+	float: left;
+	width: 12px;
+	height: 12px;
+	font-size: 10px;
+	margin: 0px 1px 1px 0px;
+}
+
+.calendar-box.selected {
+	width: 10px;
+	height: 10px;
+	border: solid 1px #000;
+	background-position: -1px -1px !important;
+	opacity: 0.8;
+}
+
+#slider-holder {
+	position: relative;
+}
+
+#slider {
+	width: 100%;
+	margin: 10px 0px;
+}
+
+#slider_value {
+	text-align: left;
+	position: relative;
+	float: left;
+	color: #AAAAAA;
+	font-family: helvetica, verdana, sans-serif;
+}
+
+.spacer {
+	clear: both; height: 1px;
+}

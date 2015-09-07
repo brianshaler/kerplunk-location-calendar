@@ -1,0 +1,37 @@
+{
+  "name": "kerplunk-location-calendar",
+  "displayName": "Calendar Travel Visualization",
+  "description": "",
+  "version": "0.0.1",
+  "kerplunk": {
+    "dependencies": [
+      "kerplunk-location-history"
+    ]
+  },
+  "keywords": [
+    "kerplunk-plugin",
+    "kp:Location",
+    "kp:Visualization"
+  ],
+  "engines": {
+    "node": ">=0.10"
+  },
+  "main": "./lib/index.js",
+  "dependencies": {
+    "lodash": "^3.10.0",
+    "moment": "^2.5.1",
+    "react": "^0.13.3",
+    "reactive-data": "0.0.4",
+    "spark-md5": "0.0.5"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.9.1",
+    "glut": "0.0.1",
+    "glut-coffee-amdify": "0.0.0",
+    "gulp": "^3.8.8",
+    "gulp-coffee": "^2.3.1"
+  },
+  "scripts": {
+    "prepublish": "rm -rf ./lib ./public && gulp"
+  }
+}
