@@ -9,7 +9,7 @@ if window?
 CalendarComponent = require './calendar'
 LegendComponent = require './legend'
 SummaryComponent = require './summary'
-EditDayComponent = require './editDay'
+#EditDayComponent = require './editDay'
 
 {DOM} = React
 
@@ -272,17 +272,18 @@ module.exports = React.createFactory React.createClass
     DOM.section
       className: 'content'
     ,
-      if @state.selectedDate
-        EditDayComponent _.extend {}, @props,
-          key: "edit-#{@state.selectedDate.formatted}"
-          date: @state.selectedDate.date
-          dateKey: @state.selectedDate.formatted
-          year: parseInt @state.selectedDate.moment.format 'YYYY'
-          month: parseInt @state.selectedDate.moment.format 'MM'
-          day: parseInt @state.selectedDate.moment.format 'DD'
-          location: @state.selectedDate.location
-          onClose: =>
-            @_setState
-              selectedDate: false
-      else
-        history
+      history
+      # if @state.selectedDate
+      #   EditDayComponent _.extend {}, @props,
+      #     key: "edit-#{@state.selectedDate.formatted}"
+      #     date: @state.selectedDate.date
+      #     dateKey: @state.selectedDate.formatted
+      #     year: parseInt @state.selectedDate.moment.format 'YYYY'
+      #     month: parseInt @state.selectedDate.moment.format 'MM'
+      #     day: parseInt @state.selectedDate.moment.format 'DD'
+      #     location: @state.selectedDate.location
+      #     onClose: =>
+      #       @_setState
+      #         selectedDate: false
+      # else
+      #   history
