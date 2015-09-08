@@ -15,11 +15,14 @@ SummaryComponent = require './summary'
 
 DAY = 86400 * 1000
 
-getUTCYMD = (time) ->
+getUTCYMD = (time = Date.now()) ->
   [year, month, day] = moment.utc time
     .format 'YYYY-MM-DD'
     .split '-'
   [parseInt(year), parseInt(month)-1, parseInt(day)]
+
+YMDtoString = (YMD = getUTCYMD()) ->
+  moment.utc(YMD).format('YYYY-MM-DD')
 
 YMDtoTime = (YMD) ->
   moment.utc(YMD).format('X') * 1000
@@ -62,9 +65,9 @@ MonthPicker = React.createFactory React.createClass
 
   render: ->
     range = monthRange @state.minYMD, @state.maxYMD
-    maxTime = moment.utc [new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1]
+    maxTime = moment.utc getUTCYMD()
       .format 'X'
-    maxTime = parseInt maxTime
+    maxTime = 86400 + parseInt maxTime
     options = _.map range, (YMD) =>
       date = moment.utc YMD
       time = parseInt date.format 'X'
@@ -86,8 +89,8 @@ MonthPicker = React.createFactory React.createClass
 module.exports = React.createFactory React.createClass
   getInitialState: ->
     minDate: new Date (new Date()).getFullYear() - 4, 0, 1
-    startDate: new Date (new Date()).getFullYear(), 0, 1
-    endDate: new Date (new Date()).getFullYear(), (new Date()).getMonth(), (new Date()).getDate()
+    startDate: new Date Date.parse YMDtoString([(new Date()).getFullYear(), 0, 1])
+    endDate: new Date 86400000 + Date.parse YMDtoString()
     calendar: {}
     selectedDate: false
 
