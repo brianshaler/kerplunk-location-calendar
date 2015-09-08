@@ -2,7 +2,7 @@
   "name": "kerplunk-location-calendar",
   "displayName": "Calendar Travel Visualization",
   "description": "",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "kerplunk": {
     "dependencies": [
       "kerplunk-location-history"
