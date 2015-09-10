@@ -1,6 +1,6 @@
 # kerplunk-location-calendar
 
-[Kerplunk](https://github.com/brianshaler/kerplunk) plugin. 
+[Kerplunk](https://github.com/brianshaler/kerplunk) plugin. Generate an interactive chart to show what cities you have been to during any time period.
 
 [![Build Status](https://travis-ci.org/brianshaler/kerplunk-location-calendar.svg)](https://travis-ci.org/brianshaler/kerplunk-location-calendar)
 [![npm version](https://img.shields.io/npm/v/kerplunk-location-calendar.svg)](https://www.npmjs.com/package/kerplunk-location-calendar)
