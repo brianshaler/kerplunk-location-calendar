@@ -10,8 +10,10 @@ module.exports = (System) ->
       nav:
         Visualize:
           Calendar: '/admin/visualize/calendar'
-      styles:
-        'kerplunk-location-calendar/css/calendar.css': ['/admin/visualize/calendar']
+      css:
+        'kerplunk-location-calendar:history': 'kerplunk-location-calendar/css/calendar.css'
+        'kerplunk-location-calendar:calendar': 'kerplunk-location-calendar/css/calendar.css'
+        'kerplunk-location-calendar:summary': 'kerplunk-location-calendar/css/calendar.css'
       requirejs:
         paths:
           moment: '/plugins/kerplunk-location-calendar/js/moment.min.js'
