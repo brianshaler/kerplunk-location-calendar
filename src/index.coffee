@@ -11,7 +11,10 @@ module.exports = (System) ->
         Visualize:
           Calendar: '/admin/visualize/calendar'
       css:
-        'kerplunk-location-calendar:history': 'kerplunk-location-calendar/css/calendar.css'
+        'kerplunk-location-calendar:history': [
+          'kerplunk-bootstrap/css/bootstrap.css'
+          'kerplunk-location-calendar/css/calendar.css'
+        ]
         'kerplunk-location-calendar:calendar': 'kerplunk-location-calendar/css/calendar.css'
         'kerplunk-location-calendar:summary': 'kerplunk-location-calendar/css/calendar.css'
       requirejs:
