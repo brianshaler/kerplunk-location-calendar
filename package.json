@@ -18,7 +18,7 @@
   },
   "main": "./lib/index.js",
   "dependencies": {
-    "lodash": "^3.10.0",
+    "lodash": "^4.6.1",
     "moment": "^2.5.1",
     "react": "^0.13.3",
     "reactive-data": "0.0.4",

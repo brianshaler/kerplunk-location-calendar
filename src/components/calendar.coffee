@@ -2,34 +2,52 @@ _ = require 'lodash'
 React = require 'react'
 moment = require 'moment'
 
-Box = require './box'
+Month = require './month'
 
 {DOM} = React
 
-module.exports = React.createFactory React.createClass
-  render: ->
-    months = _.map @props.months, (month, monthKey) =>
-      empties = []
-      dow = parseInt moment.utc(Date.parse "#{monthKey}-01").format('d')
-      for i in [1..dow] by 1
-        empties.push Box
-          key: "calendar-empty-#{monthKey}-#{i}"
+DAY = 86400 * 1000
 
-      DOM.div
-        key: "month-#{monthKey}"
-        className: 'month col-xs-4 col-md-4 col-lg-3'
-      ,
-        DOM.h3 null, moment(monthKey+'-01').format('MMMM YYYY')
-        DOM.div
-          className: 'calendar-days'
-          style:
-            maxWidth: 7 * 13
-            height: 6 * 13
-        , [empties].concat _.map month, (day) =>
-          Box _.extend {}, @props,
-            key: "calendar-#{day.formatted}"
-            day: day
-            onSelectDate: @props.onSelectDate
+module.exports = React.createFactory React.createClass
+  getInitialState: ->
+    # calendar: @props.Repository.getLatest('kerplunk-location-calendar') ? {}
+    months: []
+    monthRequests: {}
+
+  updateCalendar: (data) ->
+    months = _.groupBy data, (day) ->
+      day.moment.format 'YYYY-MM'
+    months = _.map months, (month, monthKey) =>
+      # month: month
+      monthKey: monthKey
+      key: monthKey
+    @setState
+      months: months
+
+  componentDidMount: ->
+    @unsub = @props.Repository.subscribe 'kerplunk-location-calendar', (data) =>
+      @updateCalendar data
+
+  componentWillUnmount: ->
+    @unsub()
+
+  render: ->
+    startTime = @props.startDate.getTime()
+    endTime = @props.endDate.getTime()
+    month = moment.utc(startTime)
+    monthCount = Math.ceil (endTime - startTime) / (28 * DAY)
+    startMonth = moment.utc(startTime).format 'YYYY-MM'
+    monthKeys = []
+    while month.toDate() < endTime and monthKeys.length <= monthCount
+      monthKeys.push month.format 'YYYY-MM'
+      month.add 1, 'M'
+
+    months = _.map monthKeys, (monthKey) =>
+      Month _.extend {}, @props,
+        key: monthKey
+        monthKey: monthKey
+        onSelectDate: @props.onSelectDate
+        store: @props.store
 
     DOM.div
       className: 'months'

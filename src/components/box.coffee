@@ -6,9 +6,18 @@ pattern = require './pattern'
 
 {DOM} = React
 
+calendarBoxStyle =
+	float: 'left'
+	width: '12px'
+	height: '12px'
+	fontSize: '10px'
+	margin: '0px 1px 1px 0px'
+
 module.exports = React.createFactory React.createClass
   getDefaultProps: ->
-    onSelectDate: -> console.log 'Box.onSelectDate not set'
+    onSelectDate: (e) ->
+      e.preventDefault()
+      console.log 'Box.onSelectDate not set'
 
   onClick: (e) ->
     e.preventDefault()
@@ -48,7 +57,7 @@ module.exports = React.createFactory React.createClass
 
   render: ->
     unless @props.day
-      return DOM.div className: 'calendar-box'
+      return DOM.div style: calendarBoxStyle
 
     day = @props.day
     location = day.location
@@ -61,8 +70,10 @@ module.exports = React.createFactory React.createClass
     # c = indexedColor display
     # pattern = getPattern c.c1, c.c2, c.pattern
     DOM.a
-      className: 'calendar-box'
-      href: if @props.isUser
+      style: calendarBoxStyle
+      href: if @props.buildUrl
+        @props.buildUrlForDate @props.day
+      else if @props.isUser
         "/admin/location/edit/#{@props.day.moment.format 'YYYY/MM/DD'}"
       else
         "/location/view/#{@props.day.moment.format 'YYYY/MM/DD'}"

@@ -21,6 +21,11 @@ module.exports = (System) ->
         paths:
           moment: '/plugins/kerplunk-location-calendar/js/moment.min.js'
           'spark-md5': '/plugins/kerplunk-location-calendar/js/spark-md5.min.js'
+      blog:
+        embedComponent:
+          'kerplunk-location-calendar:embedMonth':
+            name: 'Travel Calendar'
+            description: "show a month of travel"
 
   routes:
     admin:
