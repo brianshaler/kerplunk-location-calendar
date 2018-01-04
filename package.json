@@ -2,7 +2,7 @@
   "name": "kerplunk-location-calendar",
   "displayName": "Calendar Travel Visualization",
   "description": "Generate an interactive chart to show what cities you have been to during any time period.",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "kerplunk": {
     "dependencies": [
       "kerplunk-location-history"
@@ -34,6 +34,7 @@
     "should": "^7.1.0"
   },
   "scripts": {
+    "build": "gulp",
     "prepublish": "rm -rf ./lib ./public && gulp",
     "test": "NODE_ENV=test mocha"
   },

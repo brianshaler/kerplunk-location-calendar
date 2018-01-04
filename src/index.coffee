@@ -19,8 +19,7 @@ module.exports = (System) ->
         'kerplunk-location-calendar:summary': 'kerplunk-location-calendar/css/calendar.css'
       requirejs:
         paths:
-          moment: '/plugins/kerplunk-location-calendar/js/moment.min.js'
-          'spark-md5': '/plugins/kerplunk-location-calendar/js/spark-md5.min.js'
+          regl: '/plugins/kerplunk-location-calendar/js/regl.min.js'
       blog:
         embedComponent:
           'kerplunk-location-calendar:embedMonth':
