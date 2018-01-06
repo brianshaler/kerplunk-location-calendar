@@ -65,44 +65,35 @@ module.exports = render = (viz, state) ->
   # }
   # p = 1
 
+  if viz.months.length == 0 and !viz.bgTexture()
+    console.log 'nothing to render', viz.months
+    return
+
   setup
     canvasSize: [canvasWidth, canvasHeight]
     p: p
     time: (Date.now() - startTime) / 1000
     z: 0.1
     patternSize: patternSize
-    previousState
-    targetState
+    previousState: previousState
+    targetState: targetState
     width: squareSize
     height: squareSize
     tex: viz.texture
     textureCount: viz.textureCount
   , ->
-    if viz.bgTexture()
-      {
-        minLat
-        maxLat
-        minLng
-        maxLng
-      } = summaryMap
-      # console.log('drawBG ' + JSON.stringify([minLng, minLat, maxLng, maxLat]))
-      crop = [
-        (minLng + 180) / 360
-        1 - (maxLat + 90) / 180
-        (maxLng + 180) / 360
-        1 - (minLat + 90) / 180
-      ]
-      # console.log('crop: ' + JSON.stringify(crop))
-      # const aspect = window.innerWidth / window.innerHeight
-      # const cropAspect = (crop[2] - crop[0]) / (crop[3] - crop[1])
-      # if (cropAspect > aspect) {
-      #   crop[3] = crop[1] + (crop[2] - crop[0]) / aspect
-      # }
-      viz.drawBG
-        p: p * targetState[2] + (1 - p) * previousState[2]
-        tex: viz.bgTexture()
-        crop: crop
-        vScale: window.innerHeight / state.height
+    {
+      minLat
+      maxLat
+      minLng
+      maxLng
+    } = summaryMap
+    # console.log('drawMap ' + JSON.stringify([minLng, minLat, maxLng, maxLat]))
+    viz.drawMap
+      p: p * targetState[2] + (1 - p) * previousState[2]
+      vScale: window.innerHeight / state.height
+      crop: [minLng, minLat, maxLng, maxLat]
+
     selDuration = 400
     # animating = state.selectedMonthAt > 0 || state.deselectedMonthAt > 0
     animatingIn = state.selectedMonthAt > 0
@@ -147,7 +138,6 @@ module.exports = render = (viz, state) ->
           Math.min(1, selP)
         else
           Math.max(-1, -selP)
-      # console.log('month', animatingIn, selP, month.getKey(), selected)
       month.draw
         selected: selected
         scale: 1

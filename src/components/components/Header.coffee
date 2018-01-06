@@ -47,5 +47,8 @@ module.exports = Header = React.createClass
       content = "#{startDateString} - #{endDateString}" + (if hideLabels then '' else ": #{unit(placeKey, placeCount)}")
       # content = "#{monthNames[month.date.getMonth()]} #{month.date.getFullYear()}"
 
-    DOM.header null,
+    DOM.header
+      style:
+        width: '100%'
+    ,
       DOM.h1 null, content

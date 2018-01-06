@@ -16,6 +16,7 @@ a {
   position: absolute;
   white-space: nowrap;
   opacity: 1;
+  line-height: 1.2em;
 }
 
 .calendar-month {
@@ -23,11 +24,13 @@ a {
   position: absolute;
   white-space: nowrap;
   opacity: 1;
+  line-height: 1.2em;
 }
 
 .view-nav {
   height: 3.5em;
   overflow: hidden;
+  line-height: 1.2em;
 }
 
 .view-nav a {

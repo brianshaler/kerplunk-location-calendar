@@ -25,6 +25,6 @@ module.exports = Square = (segments=1) ->
         1 + vcol + (vrow + 1) * vcols
       ]
 
-	position: positions
-	elements: elements
-	count: elements.length * 3
+  position: positions
+  elements: elements
+  count: elements.length * 3

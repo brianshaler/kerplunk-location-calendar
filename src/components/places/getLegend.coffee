@@ -1,6 +1,8 @@
 Totals = require './totals'
 Ranked = require './ranked'
 
+today = new Date()
+
 module.exports = getLegend = (days, places, config, placeKey) ->
   {
     squareSize
@@ -12,6 +14,8 @@ module.exports = getLegend = (days, places, config, placeKey) ->
   } = config
 
   legendLabels = {}
+
+  days = days.filter ({d}) -> d <= today
 
   totals = Totals days.map (d) -> d[placeKey]
   ranked = Ranked totals
@@ -58,10 +62,11 @@ module.exports = getLegend = (days, places, config, placeKey) ->
         total: totals[id]
         percent: totals[id] / days.length
 
-    legendLabels[id].legendX = pageMargin[3] + (totals[id] > sideLabelMax ? 0 : (squareSize + squareMargin) * (totals[id] + 0.2))
-    legendLabels[id].legendY = pageMargin[0] + (rowsBefore + (totals[id] > sideLabelMax ? 0 : 1)) * (squareSize + squareMargin) - textHeight * 1.1
+    legendLabels[id].legendX = pageMargin[3] + (if totals[id] > sideLabelMax then 0 else (squareSize + squareMargin) * (totals[id] + 0.2))
+    legendLabels[id].legendY = pageMargin[0] + (rowsBefore + (if totals[id] > sideLabelMax then 0 else 1)) * (squareSize + squareMargin) - textHeight * 1.1
 
     key: day.key,
+    d: day.d,
     legendPosition: [legX, legY],
     color1: place.color1,
     color2: place.color2,

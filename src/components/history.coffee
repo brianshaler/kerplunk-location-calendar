@@ -13,7 +13,7 @@ Days = require './calendar/days'
 Month = require './calendar/month'
 setupMonths = require './calendar/setupMonths'
 Map = require './map/Map'
-Places = require './places'
+Places = require './places/index'
 cleanPlaceName = require './places/cleanPlaceName'
 getLegend = require './places/getLegend'
 getSummaryMap = require './places/getSummaryMap'
@@ -21,12 +21,12 @@ setupWebGL = require './webgl/setup'
 renderGL = require './webgl/render'
 patternTexture = require './webgl/patternTexture'
 
-DateRange = React.createFactory DateRange
-Header = React.createFactory Header
-Legend = React.createFactory Legend
-MapOverlay = React.createFactory MapOverlay
-MonthButtons = React.createFactory MonthButtons
-MonthLabels = React.createFactory MonthLabels
+DateRangeFactory = React.createFactory DateRange
+HeaderFactory = React.createFactory Header
+LegendFactory = React.createFactory Legend
+MapOverlayFactory = React.createFactory MapOverlay
+MonthButtonsFactory = React.createFactory MonthButtons
+MonthLabelsFactory = React.createFactory MonthLabels
 
 animate = false
 # slowAnimate = true
@@ -43,7 +43,8 @@ module.exports = React.createFactory React.createClass
     startDate = new Date(new Date().getFullYear(), 0, 1)
     # startDate = new Date(2017, 11, 1)
     # startDate = new Date(2011, 0, 1)
-    endDate = new Date(Math.min(today, new Date(2017, 12, 0)))
+    # endDate = new Date(today)
+    endDate = new Date(startDate.getFullYear(), 12, 0)
 
     initialViewState = [1, 0, 0]
 
@@ -58,16 +59,17 @@ module.exports = React.createFactory React.createClass
       monthColumns: 6
       pageMargin: [70, 50, 50, 50]
       patternSize: 8
-      pixelRatio: window.devicePixelRatio
+      pixelRatio: window?.devicePixelRatio || 1
       sideLabelMax: 20
       squareMargin: 5
       squareSize: 24
       textHeight: 32
       width: 1
     endDate: endDate
-    height: 100
+    height: 400
     placeKey: 'city'
     movements: []
+    mounted: false
     places: new Places()
     previousState: initialViewState
     startDate: startDate
@@ -84,7 +86,7 @@ module.exports = React.createFactory React.createClass
       dayProps: []
       legendLabels: {}
     targetState: initialViewState
-    width: 100
+    width: 600
 
   componentDidMount: ->
     { config, endDate, startDate } = @state
@@ -94,11 +96,11 @@ module.exports = React.createFactory React.createClass
 
     window.addEventListener 'resize', @_resize
 
-    viz = setupWebGL @refs.canvas
+    viz = setupWebGL React.findDOMNode(@refs.canvas)
     @viz = viz
 
     map = Map viz.regl
-    viz.drawBG = map.draw
+    viz.drawMap = map.draw
     viz.bgTexture = map.bgTexture
 
     viz.months = []
@@ -113,7 +115,7 @@ module.exports = React.createFactory React.createClass
     @resize()
     @draw()
 
-    @updateDateRange(new Date(today.getFullYear(), 0, 1), today)
+    @updateDateRange(@state.startDate, @state.endDate)
 
     # @updateData travel2017.slice(0, 1)
 
@@ -132,6 +134,9 @@ module.exports = React.createFactory React.createClass
     #   @updateDateRange(new Date(2017, 0, 1), @state.endDate)
     # , 4000
 
+    @setState
+      mounted: true
+
     if slowAnimate
       setInterval =>
         @setState
@@ -145,15 +150,22 @@ module.exports = React.createFactory React.createClass
     @draw()
 
   updateConfig: (newConfig, state=@state) ->
-    { allDays, endDate, places, startDate } = state
+    { allDays, endDate, movements, places, startDate } = state
     viz = @viz
 
     config = Object.assign({}, @state.config, newConfig)
 
-    summaryLegend = getLegend allDays, places, config, state.placeKey
+    summaryLegend = if movements.length > 0
+      getLegend allDays, places, config, state.placeKey
+    else
+      {dayProps: [], legendLabels: {}}
 
-    # console.log('updateConfig getSummaryMap')
-    summaryMap = getSummaryMap Object.assign({}, state, {config})
+    # console.log('updateData getSummaryMap')
+    summaryMap = if movements.length > 0
+      getSummaryMap Object.assign({}, state, {config})
+    else
+      {dayProps: [], mapLabels: {}}
+
 
     setupMonths(viz.regl, viz.months, startDate, endDate, config)
     viz.months.forEach (month) ->
@@ -172,12 +184,13 @@ module.exports = React.createFactory React.createClass
     }
 
     Object.assign({}, state, {
-      config,
-      summaryLegend,
-      summaryMap,
+      config: config,
+      summaryLegend: summaryLegend,
+      summaryMap: summaryMap,
     })
 
   updateDateRange: (startDate, endDate) ->
+    # console.log 'updateDateRange', startDate, endDate
     { config } = @state
     viz = @viz
 
@@ -190,11 +203,15 @@ module.exports = React.createFactory React.createClass
     startYear = startDate.getFullYear()
 
     data = []
-    if !@everLoaded[startYear] && startYear == endDate.getFullYear()
+    if startYear == endDate.getFullYear()
+      if @everLoaded[startYear]
+        return @updateData [], startDate, endDate
       # partial year?
       @everLoaded[startYear] = true
-      @fetchData startYear, endDate
-    if !@everLoaded[startYear] && startYear + 1 == endDate.getFullYear()
+      @fetchData new Date(startYear, 0, 1), endDate
+    if startYear + 1 == endDate.getFullYear()
+      if @everLoaded[startYear]
+        return @updateData [], startDate, endDate
       # one year
       @everLoaded[startYear] = true
       @fetchData new Date(startYear, 0, 1), new Date(startYear + 1, 0, 1)
@@ -204,7 +221,11 @@ module.exports = React.createFactory React.createClass
         if !@everLoaded[year]
           @everLoaded[year] = true
           @fetchData new Date(year, 0, 1), new Date(year + 1, 0, 1)
+      @updateData [], startDate, endDate
 
+    # @setState
+    #   startDate: startDate
+    #   endDate: endDate
     # newState = @updateData data, startDate, endDate
     # @resize Object.assign({}, @state, newState)
 
@@ -214,41 +235,43 @@ module.exports = React.createFactory React.createClass
       from: dateToDayStr startDate
       to: dateToDayStr endDate
     @props.request.get url, options, (err, data) =>
-      newState = @updateData data
+      newState = @updateData (data or [])
 
   updateData: (data, startDate=@state.startDate, endDate=@state.endDate) ->
+    # console.log 'updateData', data.length, startDate, endDate
     newMovements = data.map (movement) ->
       on: dayStrToDate(movement.on),
       from: Object.assign({}, movement.from_location, {name: cleanPlaceName(movement.from)}),
       to: Object.assign({}, movement.to_location, {name: cleanPlaceName(movement.to)}),
 
     movements = @state.movements.concat newMovements
-    movements.sort (a, b) -> if a.on > b.on then 1 else -1
 
-    lastMovement = movements[0]
     allDays = Days startDate, endDate
 
-    allDays.forEach (day) ->
-      # if day.d < firstDate
-      #   day.placeName = lastMovement.to
-      #   return
-      movement = lastMovement
-      movements.find (m) ->
-        if m.on <= day.d
-          movement = m
-        m.on > day.d
+    if movements.length > 0
+      movements.sort (a, b) -> if a.on > b.on then 1 else -1
+      lastMovement = movements[0]
+      allDays.forEach (day) =>
+        # if day.d < firstDate
+        #   day.placeName = lastMovement.to
+        #   return
+        movement = lastMovement
+        movements.find (m) ->
+          if m.on <= day.d
+            movement = m
+          m.on > day.d
 
-      lastMovement = movement
+        lastMovement = movement
 
-      placeProps
-      placeProps = if movement.on > day.d
-        movement.from
-      else
-        movement.to
+        placeProps
+        placeProps = if movement.on > day.d
+          movement.from
+        else
+          movement.to
 
-      place = @state.places.getPlace placeProps
-      day.city = place.city
-      day.country = place.country
+        place = @state.places.getPlace placeProps
+        day.city = place.city
+        day.country = place.country
 
     newState =
       allDays: allDays
@@ -257,10 +280,16 @@ module.exports = React.createFactory React.createClass
       movements: movements
       startDate: startDate
 
-    summaryLegend = getLegend(allDays, @state.places, @state.config, @state.placeKey)
+    summaryLegend = if movements.length > 0
+      getLegend(allDays, @state.places, @state.config, @state.placeKey)
+    else
+      {dayProps: [], legendLabels: {}}
 
     # console.log('updateData getSummaryMap')
-    summaryMap = getSummaryMap(Object.assign({}, @state, newState))
+    summaryMap = if movements.length > 0
+      getSummaryMap(Object.assign({}, @state, newState))
+    else
+      {dayProps: [], mapLabels: {}}
 
     newState.summaryLegend = summaryLegend
     newState.summaryMap = summaryMap
@@ -321,7 +350,7 @@ module.exports = React.createFactory React.createClass
       deselectedMonth: null,
       selectedMonthAt: Date.now(),
       selectedMonth: month,
-      monthLegend,
+      monthLegend: monthLegend,
     })
 
   deselectMonth: (force=false) ->
@@ -353,7 +382,7 @@ module.exports = React.createFactory React.createClass
     } = state.config
 
     scaledWidth = (window.innerWidth - 15) * pixelRatio
-    onscreenHeight = (window.innerHeight - 56) * pixelRatio - pageMargin[0] - pageMargin[2]
+    onscreenHeight = (window.innerHeight - 49) * pixelRatio - pageMargin[0] - pageMargin[2]
     availableWidth = scaledWidth - pageMargin[1] - pageMargin[3]
     # height = window.innerHeight - 40
 
@@ -382,12 +411,12 @@ module.exports = React.createFactory React.createClass
 
     newState = @updateConfig({
       height: onscreenHeight,
-      legendColumns,
-      monthColumns,
-      patternSize,
+      legendColumns: legendColumns,
+      monthColumns: monthColumns,
+      patternSize: patternSize,
       sideLabelMax: legendColumns - 14,
-      squareMargin,
-      squareSize,
+      squareMargin: squareMargin,
+      squareSize: squareSize,
       textHeight: squareSize,
       width: availableWidth,
     }, state)
@@ -399,7 +428,7 @@ module.exports = React.createFactory React.createClass
     maxLegendY += squareSize + pageMargin[2]
 
     # console.log('resizing', window.innerHeight, maxLegendY / pixelRatio)
-    height = Math.max(onscreenHeight, maxLegendY) / pixelRatio
+    height = Math.max(onscreenHeight + pageMargin[0] + pageMargin[2], maxLegendY) / pixelRatio
 
     @setState({
       width: window.innerWidth,
@@ -418,7 +447,7 @@ module.exports = React.createFactory React.createClass
     renderGL(@viz, @state, (newState) => @setState(newState))
 
     if animate or @state.lastActivity > Date.now() - 2000
-      @raf = requestAnimationFrame(@draw.bind(this))
+      @raf = requestAnimationFrame(@draw)
 
   showView: (viewId) ->
     targetState = [0, 0, 0]
@@ -448,195 +477,206 @@ module.exports = React.createFactory React.createClass
 
   render: ->
     {
-      endDate,
-      startDate,
+      endDate
+      mounted
+      startDate
     } = @state
 
-    currentMonths = ((@viz && @viz.months) || []).filter(m => m.getDate() >= startDate && m.getDate() < endDate)
+    currentMonths = ((@viz && @viz.months) || []).filter((m) => m.getDate() >= startDate && m.getDate() < endDate)
 
     DOM.div null,
       DOM.div
-        className: 'view-nav'
+        style:
+          display: if mounted == true then 'none' else null
+      ,
+        'Loading...'
+      DOM.div
+        style:
+          display: if mounted == true then null else 'none'
       ,
         DOM.div
-          className: "main-nav #{if @state.showDatePicker then 'hidden' else 'showing'}"
+          className: 'view-nav'
         ,
           DOM.div
-            className: 'nav-content'
-          ,
-            DOM.a
-              href: '#'
-              className: if @state.targetState[0] == 1 then 'selected' else ''
-              onClick: (e) =>
-                e.preventDefault()
-                @showView(0)
-            , 'Calendar'
-            DOM.span null, ' '
-            DOM.a
-              href: '#'
-              className: if @state.targetState[1] == 1 then 'selected' else ''
-              onClick: (e) =>
-                e.preventDefault()
-                @showView(1)
-            , 'Legend'
-            DOM.span null, ' '
-            DOM.a
-              href: '#'
-              className: if @state.targetState[2] == 1 then 'selected' else ''
-              onClick: (e) =>
-                e.preventDefault()
-                @showView(2)
-            , 'Map'
-            DOM.span
-              style:
-                display: if @state.placeKey == 'city' then 'none' else null
-            ,
-              DOM.span null, ' '
-              DOM.a
-                href: '#'
-                onClick: (e) =>
-                  e.preventDefault()
-                  @changePlaceKey('city')
-              , 'By City'
-            DOM.span
-              style:
-                display: if @state.placeKey == 'country' then 'none' else null
-            ,
-              DOM.span null, ' '
-              DOM.a
-                href: '#'
-                onClick: (e) =>
-                  e.preventDefault()
-                  @changePlaceKey('country')
-              , 'By Country'
-            DOM.span null, ' '
-            DOM.a
-              href: '#'
-              onClick: (e) =>
-                e.preventDefault()
-                @setState
-                  showDatePicker: true
-            , 'Date Range'
-        DOM.div
-          className: "date-picker #{if @state.showDatePicker then 'showing' else 'hidden'}"
-        ,
-          DOM.div
-            className: 'nav-content'
+            className: "main-nav #{if @state.showDatePicker then 'hidden' else 'showing'}"
           ,
             DOM.div
-              className: 'content-left'
+              className: 'nav-content'
             ,
-              DateRangeFactory
-                endDate: endDate
-                label: 'All Time'
-                onSelect: @updateDateRange.bind(this)
-                selectionEnd: new Date(Math.min(today, new Date(2017, 12, 0)))
-                selectionStart: new Date(2011, 0, 1)
-                startDate: startDate
+              DOM.a
+                href: '#'
+                className: if @state.targetState[0] == 1 then 'selected' else ''
+                onClick: (e) =>
+                  e.preventDefault()
+                  @showView(0)
+              , 'Calendar'
               DOM.span null, ' '
-              DateRangeFactory
-                endDate: endDate
-                label: 'This Year'
-                onSelect: @updateDateRange.bind(this)
-                selectionEnd: new Date(new Date().getFullYear(), 12, 0)
-                selectionStart: new Date(new Date().getFullYear(), 0, 1)
-                startDate: startDate
+              DOM.a
+                href: '#'
+                className: if @state.targetState[1] == 1 then 'selected' else ''
+                onClick: (e) =>
+                  e.preventDefault()
+                  @showView(1)
+              , 'Legend'
               DOM.span null, ' '
-              DateRangeFactory
-                endDate: endDate
-                label: 'Last Year'
-                onSelect: @updateDateRange.bind(this)
-                selectionEnd: new Date(new Date().getFullYear() - 1, 12, 0)
-                selectionStart: new Date(new Date().getFullYear() - 1, 0, 1)
-                startDate: startDate
-              DOM.div
+              DOM.a
+                href: '#'
+                className: if @state.targetState[2] == 1 then 'selected' else ''
+                onClick: (e) =>
+                  e.preventDefault()
+                  @showView(2)
+              , 'Map'
+              DOM.span
                 style:
-                  display: 'inline'
+                  display: if @state.placeKey == 'city' then 'none' else null
               ,
-                Array(3).fill().map (_, i) =>
-                  thisYear = new Date().getFullYear()
-                  year = thisYear - 2 - i
-                  selectionStart = new Date(year, 0, 1)
-                  selectionEnd = new Date(year, 12, 0)
-                  DOM.span
-                    key: i
-                  ,
-                    DOM.span null, ' '
-                    DateRangeFactory
-                      endDate: endDate
-                      label: year
-                      onSelect: @updateDateRange.bind(this)
-                      selectionEnd: selectionEnd
-                      selectionStart: selectionStart
-                      startDate: startDate
-            DOM.div
-              className: 'content-right'
-            ,
+                DOM.span null, ' '
+                DOM.a
+                  href: '#'
+                  onClick: (e) =>
+                    e.preventDefault()
+                    @changePlaceKey('city')
+                , 'By City'
+              DOM.span
+                style:
+                  display: if @state.placeKey == 'country' then 'none' else null
+              ,
+                DOM.span null, ' '
+                DOM.a
+                  href: '#'
+                  onClick: (e) =>
+                    e.preventDefault()
+                    @changePlaceKey('country')
+                , 'By Country'
+              DOM.span null, ' '
               DOM.a
                 href: '#'
                 onClick: (e) =>
                   e.preventDefault()
                   @setState
-                    showDatePicker: false
-              , 'X'
-      DOM.div
-        style:
-          position: 'absolute'
-          # marginTop: '-10px'
-          width: "#{@state.width}px"
-          height: "#{@state.height}px"
-      ,
-        DOM.canvas
-          ref: 'canvas'
-          width: @state.canvasWidth
-          height: @state.canvasHeight
-          style:
-            position: 'absolute'
-            width: "#{@state.width}px"
-            height: "#{@state.height}px"
-        HeaderFactory
-          endDate: @state.endDate
-          hideLabels: @state.hideLabels
-          placeKey: @state.placeKey
-          selectedMonth: @state.selectedMonth
-          startDate: @state.startDate
-          summaryMap: @state.summaryMap
-        if @state.hideLabels != true
-          DOM.div null,
-            LegendFactory
-              config: @state.config
-              legendShowing: @state.targetState[1] > 0
-              monthLegend: @state.monthLegend
-              placeKey: @state.placeKey
-              selectedMonth: @state.selectedMonth
-              summaryLegend: @state.summaryLegend
-            MapOverlayFactory
-              config: @state.config
-              mapShowing: @state.targetState[2] > 0
-              monthLegend: @state.monthLegend
-              placeKey: @state.placeKey
-              selectedMonth: @state.selectedMonth
-              summaryMap: @state.summaryMap
-        else
-          null
+                    showDatePicker: true
+              , 'Date Range'
+          DOM.div
+            className: "date-picker #{if @state.showDatePicker then 'showing' else 'hidden'}"
+          ,
+            DOM.div
+              className: 'nav-content'
+            ,
+              DOM.div
+                className: 'content-left'
+              ,
+                DateRangeFactory
+                  endDate: endDate
+                  label: 'All Time'
+                  onSelect: @updateDateRange
+                  selectionEnd: new Date(Math.min(today, new Date(today.getFullYear(), 12, 0)))
+                  selectionStart: new Date(2011, 0, 1)
+                  startDate: startDate
+                DOM.span null, ' '
+                DateRangeFactory
+                  endDate: endDate
+                  label: 'This Year'
+                  onSelect: @updateDateRange
+                  selectionEnd: new Date(new Date().getFullYear(), 12, 0)
+                  selectionStart: new Date(new Date().getFullYear(), 0, 1)
+                  startDate: startDate
+                DOM.span null, ' '
+                DateRangeFactory
+                  endDate: endDate
+                  label: 'Last Year'
+                  onSelect: @updateDateRange
+                  selectionEnd: new Date(new Date().getFullYear() - 1, 12, 0)
+                  selectionStart: new Date(new Date().getFullYear() - 1, 0, 1)
+                  startDate: startDate
+                DOM.div
+                  style:
+                    display: 'inline'
+                ,
+                  Array(3).fill().map (_, i) =>
+                    thisYear = new Date().getFullYear()
+                    year = thisYear - 2 - i
+                    selectionStart = new Date(year, 0, 1)
+                    selectionEnd = new Date(year, 12, 0)
+                    DOM.span
+                      key: i
+                    ,
+                      DOM.span null, ' '
+                      DateRangeFactory
+                        endDate: endDate
+                        label: year
+                        onSelect: @updateDateRange
+                        selectionEnd: selectionEnd
+                        selectionStart: selectionStart
+                        startDate: startDate
+              DOM.div
+                className: 'content-right'
+              ,
+                DOM.a
+                  href: '#'
+                  onClick: (e) =>
+                    e.preventDefault()
+                    @setState
+                      showDatePicker: false
+                , 'X'
         DOM.div
           style:
-            # display: 'none',
             position: 'absolute'
-            left: if @state.targetState[0] == 1 then '0px' else '-10000px'
+            # marginTop: '-10px'
+            width: "#{@state.width}px"
+            height: "#{@state.height}px"
+            overflow: 'hidden'
         ,
-          MonthLabelsFactory
-            config: @state.config
-            months: currentMonths
+          DOM.canvas
+            ref: 'canvas'
+            width: @state.canvasWidth
+            height: @state.canvasHeight
+            style:
+              position: 'absolute'
+              width: "#{@state.width}px"
+              height: "#{@state.height}px"
+          HeaderFactory
+            endDate: @state.endDate
+            hideLabels: @state.hideLabels
+            placeKey: @state.placeKey
             selectedMonth: @state.selectedMonth
-          MonthButtonsFactory
-            config: @state.config
-            months: currentMonths
-            onSelect: (month) =>
-              # if @state.selectedMonth and @state.selectedMonth != month
-              #   return
-              if @state.selectedMonth
-                @deselectMonth()
-                return
-              @selectMonth month
-            selectedMonth: @state.selectedMonth
+            startDate: @state.startDate
+            summaryMap: @state.summaryMap
+          if @state.hideLabels != true
+            DOM.div null,
+              LegendFactory
+                config: @state.config
+                legendShowing: @state.targetState[1] > 0
+                monthLegend: @state.monthLegend
+                placeKey: @state.placeKey
+                selectedMonth: @state.selectedMonth
+                summaryLegend: @state.summaryLegend
+              MapOverlayFactory
+                config: @state.config
+                mapShowing: @state.targetState[2] > 0
+                monthLegend: @state.monthLegend
+                placeKey: @state.placeKey
+                selectedMonth: @state.selectedMonth
+                summaryMap: @state.summaryMap
+          else
+            null
+          DOM.div
+            style:
+              # display: 'none',
+              position: 'absolute'
+              left: if @state.targetState[0] == 1 then '0px' else '-10000px'
+          ,
+            MonthLabelsFactory
+              config: @state.config
+              months: currentMonths
+              selectedMonth: @state.selectedMonth
+            MonthButtonsFactory
+              config: @state.config
+              months: currentMonths
+              onSelect: (month) =>
+                # if @state.selectedMonth and @state.selectedMonth != month
+                #   return
+                if @state.selectedMonth
+                  @deselectMonth()
+                  return
+                @selectMonth month
+              selectedMonth: @state.selectedMonth

@@ -1,8 +1,10 @@
 Regl = require 'regl'
 
 module.exports = setup = (canvas) ->
-  gl = canvas.getContext 'webgl',
+  gl = canvas.getContext 'webgl', {
+    premultipliedAlpha: false
     preserveDrawingBuffer: true
+  }
   # console.log('gl', gl, canvas)
   regl = Regl
     gl: gl

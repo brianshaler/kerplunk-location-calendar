@@ -123,6 +123,7 @@ module.exports = getSummaryMap = (state) ->
     mapLabels[key].mapY = mapY
 
     key: day.key,
+    d: day.d,
     mapPosition: [mapX, mapY],
     color1: place.color1,
     color2: place.color2,

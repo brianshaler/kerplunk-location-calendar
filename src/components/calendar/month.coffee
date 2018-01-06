@@ -50,6 +50,9 @@ setMonth = (month, date) ->
   month.key = key
   month.date = date
   month.days = days
+  month.startDate = startDate
+  month.endDate = endDate
+  month
 
 updateCalendarPosition = (month, x=month.x, y=month.y) ->
   calendarPosition = new Array(maxDays).fill([-10000, -10000])
@@ -98,6 +101,10 @@ updateColors = (month, days) ->
   month.updateBuffer('color2', color2)
   month.updateBuffer('textureId', textureId)
 
+filterDaysByMonth = (month, days) ->
+  days.filter ({d}) ->
+    d >= month.startDate && d <= month.endDate
+
 destroy = (month) -> null
 
 square = Square 1
@@ -134,12 +141,12 @@ module.exports = Month = (regl, date, config) ->
   month.updateBuffer 'tOffset', tOffset
 
   draw = regl
-		frag: fragmentShader
-		vert: vertexShader
-		elements: square.elements
-		count: square.count
-		attributes:
-			position: square.position
+    frag: fragmentShader
+    vert: vertexShader
+    elements: square.elements
+    count: square.count
+    attributes:
+      position: square.position
       color1:
         buffer: month.buffers.color1
         divisor: 1
@@ -177,6 +184,6 @@ module.exports = Month = (regl, date, config) ->
   setConfig: (config) -> month.config = config
   setMonth: (date) -> setMonth(month, date)
   updateCalendarPosition: (x=month.x, y=month.y) -> updateCalendarPosition(month, x, y)
-  updateColors: (allDays) -> updateColors(month, allDays)
-  updateLegendPosition: (allDays) -> updateLegendPosition(month, allDays)
-  updateMapPosition: (allDays) -> updateMapPosition(month, allDays)
+  updateColors: (allDays) -> updateColors(month, filterDaysByMonth(month, allDays))
+  updateLegendPosition: (allDays) -> updateLegendPosition(month, filterDaysByMonth(month, allDays))
+  updateMapPosition: (allDays) -> updateMapPosition(month, filterDaysByMonth(month, allDays))
