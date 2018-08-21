@@ -234,6 +234,7 @@ module.exports = React.createFactory React.createClass
     options =
       from: dateToDayStr startDate
       to: dateToDayStr endDate
+      cache: dateToDayStr new Date()
     @props.request.get url, options, (err, data) =>
       newState = @updateData (data or [])
 
