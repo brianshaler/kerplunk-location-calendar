@@ -15,6 +15,8 @@ module.exports = React.createFactory React.createClass
       lists: [{key: 'time', name: 'calendar'}]
 
   render: ->
+    return DOM.div() if typeof document == 'undefined'
+
     Month _.extend {}, @props,
       onSelectDate: (e) ->
         e.preventDefault()
